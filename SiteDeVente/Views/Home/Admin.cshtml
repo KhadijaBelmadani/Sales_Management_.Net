@@ -1,0 +1,770 @@
+﻿@{
+    ViewBag.Title = "Admin";
+    Layout= "~/Views/Shared/AdminLayout.cshtml";
+    var nomComplet = Session["UserNom"];
+    var email = Session["UserEmail"];
+    var image = Session["UserImage"];
+    string connectionString = "data source=(LocalDB)\\MSSQLLocalDB;attachdbfilename=|DataDirectory|VenteDB.mdf;integrated security=True;App=EntityFramework";
+    string[] LabelsChartLineaireMensuelles;
+    double[] ventesChartLineaireMensuelles;
+    string[] LabelsChartLineaireAnnuelles;
+    double[] ventesChartLineaireAnnuelles;
+    string[] labelsCategories;
+    string[] dataCategories;
+
+    string AffichageDesCartes(string option)
+    {
+        string montantTotal = "0";
+
+        using (System.Data.SqlClient.SqlConnection connection = new System.Data.SqlClient.SqlConnection(connectionString))
+        {
+            connection.Open();
+
+            string sqlQuery = "";
+            if (option.Equals("Montant"))
+            {
+                sqlQuery = @"SELECT SUM(P.prix * A.quantite) AS MontantTotalAchats
+                    FROM Acheter A
+                    JOIN Produit P ON A.idProduitF = P.idProduit;
+                    ";
+            }
+            if (option.Equals("Categories"))
+            {
+                sqlQuery = @"
+            SELECT COUNT(*) AS NombreTotalCategories
+            FROM Categorie;
+
+            ";
+            }
+
+            if (option.Equals("Produits"))
+            {
+                sqlQuery = @"
+        SELECT COUNT(*) AS NombreTotalProduits
+        FROM Produit;
+
+";
+            }
+
+            if (option.Equals("Users"))
+            {
+                sqlQuery = @"
+        SELECT COUNT(*) AS NombreTotalUtilisateurs
+        FROM [User];
+
+        ";
+            }
+
+
+            using (System.Data.SqlClient.SqlCommand command = new System.Data.SqlClient.SqlCommand(sqlQuery, connection))
+            {
+                //command.Parameters.AddWithValue("@UserID", userID);
+
+                using (System.Data.SqlClient.SqlDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        montantTotal = reader[0].ToString();
+                    }
+
+                }
+            }
+        }
+        return montantTotal;
+    }
+
+
+    void VentesMensuelles()
+    {
+
+        double[] salesAmounts = new double[12]; // Un tableau pour stocker les montants des ventes par mois
+
+        using (System.Data.SqlClient.SqlConnection connection = new System.Data.SqlClient.SqlConnection(connectionString))
+        {
+            connection.Open();
+
+            // SQL query to retrieve total sales amount per month for the current year
+            string query = @"SELECT MONTH(A.date) AS Month, SUM(P.prix * A.quantite) AS SalesAmount
+                    FROM Acheter A
+                    JOIN Produit P ON A.idProduitF = P.idProduit
+                    WHERE YEAR(A.date) = YEAR(GETDATE())
+                    GROUP BY MONTH(A.date)
+                    ORDER BY MONTH(A.date);";
+
+            using (System.Data.SqlClient.SqlCommand command = new System.Data.SqlClient.SqlCommand(query, connection))
+            {
+                using (System.Data.SqlClient.SqlDataReader
+                    reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        int monthNumber = Convert.ToInt32(reader["Month"]);
+                        int index = monthNumber - 1; // Les mois sont de 1 à 12, alors que les indices de tableau sont de 0 à 11
+                        salesAmounts[index] = Convert.ToDouble(reader["SalesAmount"]);
+                    }
+                }
+            }
+        }
+        LabelsChartLineaireMensuelles = new[] { "Jan", "Fev", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Dec" };
+        ventesChartLineaireMensuelles = salesAmounts;
+
+    }
+
+    void VentesAnnuelles()
+    {
+        List<string> availableYears = new List<string>();
+        List<double> annualSalesAmounts = new List<double>();
+
+        using (System.Data.SqlClient.SqlConnection connection = new System.Data.SqlClient.SqlConnection(connectionString))
+        {
+            connection.Open();
+
+            // SQL query to retrieve available years
+            string availableYearsQuery = @"SELECT DISTINCT YEAR(A.date) AS Year
+                                    FROM Acheter A
+                                    ORDER BY YEAR(A.date) ASC;";
+
+            using (System.Data.SqlClient.SqlCommand availableYearsCommand = new System.Data.SqlClient.SqlCommand(availableYearsQuery, connection))
+            {
+                using (System.Data.SqlClient.SqlDataReader availableYearsReader = availableYearsCommand.ExecuteReader())
+                {
+                    while (availableYearsReader.Read())
+                    {
+                        string year = availableYearsReader["Year"].ToString();
+                        availableYears.Add(year);
+                    }
+                }
+            }
+
+            // Loop through available years and fetch sales data for each year
+            foreach (string year in availableYears)
+            {
+                string annualSalesQuery = $@"SELECT SUM(P.prix * A.quantite) AS AnnualSalesAmount
+                              FROM Acheter A
+                              JOIN Produit P ON A.idProduitF = P.idProduit
+                              WHERE YEAR(A.date) = {year};";
+
+                using (System.Data.SqlClient.SqlCommand annualSalesCommand = new System.Data.SqlClient.SqlCommand(annualSalesQuery, connection))
+                {
+                    using (System.Data.SqlClient.SqlDataReader annualSalesReader = annualSalesCommand.ExecuteReader())
+                    {
+                        while (annualSalesReader.Read())
+                        {
+                            double annualSalesAmount = Convert.ToDouble(annualSalesReader["AnnualSalesAmount"]);
+                            annualSalesAmounts.Add(annualSalesAmount);
+                        }
+                    }
+                }
+            }
+        }
+        LabelsChartLineaireAnnuelles = availableYears.ToArray();
+        ventesChartLineaireAnnuelles = annualSalesAmounts.ToArray();
+
+
+
+    }
+
+    void AffichageDeLaPie()
+    {
+        labelsCategories = new string[4];
+        dataCategories = new string[4];
+        int total = 0;
+
+        using (System.Data.SqlClient.SqlConnection connection = new System.Data.SqlClient.SqlConnection(connectionString))
+        {
+            connection.Open();
+
+            string sqlQuery = @"
+                -- Calcul du montant total des ventes par catégorie
+                WITH MontantVentesParCategorie AS (
+                    SELECT
+                        c.idCategorie,
+                        c.nom AS NomCategorie,
+                        SUM(a.quantite * p.prix) AS MontantTotalVentes
+                    FROM
+                        Categorie c
+                    LEFT JOIN
+                        Produit p ON c.idCategorie = p.idCategorieF
+                    LEFT JOIN
+                        Acheter a ON p.idProduit = a.idProduitF
+                    GROUP BY
+                        c.idCategorie, c.nom
+                )
+
+                -- Calcul du pourcentage de contribution
+                SELECT TOP 3
+                    m.idCategorie,
+                    m.NomCategorie,
+                    m.MontantTotalVentes,
+                    (m.MontantTotalVentes * 100.0) / (SELECT SUM(MontantTotalVentes) FROM MontantVentesParCategorie) AS PourcentageContribution
+                FROM
+                    MontantVentesParCategorie m
+                ORDER BY
+                    PourcentageContribution DESC;
+               ";
+
+            using (System.Data.SqlClient.SqlCommand command = new System.Data.SqlClient.SqlCommand(sqlQuery, connection))
+            {
+
+                using (System.Data.SqlClient.SqlDataReader reader = command.ExecuteReader())
+                {
+                    int i = 0;
+                    while (reader.Read())
+                    {
+                        labelsCategories[i] = reader[1].ToString();
+                        try
+                        {
+                            dataCategories[i] = Convert.ToInt32(reader[3]).ToString();
+                            total += Convert.ToInt32(reader[3]);
+                        }
+                        catch (Exception)
+                        {
+                            dataCategories[i] = "0";
+                        }
+                        i++;
+                    }
+                }
+            }
+            labelsCategories[3] = "Autres";
+            dataCategories[3] = (100 - total).ToString();
+        }
+    }
+
+
+
+    VentesMensuelles();
+    VentesAnnuelles();
+    AffichageDeLaPie();
+}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>@nomComplet (admin) - Statistiques</title>
+
+    <!-- Custom styles for this template-->
+    <link href="~/Content/css/sb-admin-2.min.css" rel="stylesheet">
+    <link href="~/Content/css/MyOwnTheme.css" rel="stylesheet">
+
+
+    <style>
+        :root {
+            --mainColor: #BF567D !important;
+            --primary: var(--mainColor) !important;
+            --secondColor: #D9B0C3;
+            --thirdColor: #D9B0C3;
+            --fourthColor: #FFFFFF;
+        }
+
+        p {
+            color: #000000;
+        }
+
+        .sidebar-divider {
+            background-color: #FFFFFF;
+        }
+    </style>
+
+</head>
+
+<body id="page-top" class="MainBackground" style="margin-top: 0 !important;">
+    
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+
+        <div class="sidebar MainBackground">
+
+
+            <!-- Sidebar -->
+            <ul class="navbar-nav sidebar sidebar-dark accordion MainBackground" id="accordionSidebar">
+
+                <!-- Sidebar - Brand -->
+                <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
+                    <div>
+                        <img src="@image" alt="" class="img-fluid rounded-circle" width="50">
+                    </div>
+                    <div class="sidebar-brand-text mx-3">@nomComplet</div>
+                </a>
+
+                <!-- Divider -->
+                <hr class="sidebar-divider my-0" style="background-color:#FFFFFF;">
+
+                <!-- Nav Item - Dashboard -->
+                <li class="nav-item active">
+                    <a class="nav-link" href="Admin">
+                        <i class="fas fa-fw fa-chart-area"></i>
+                        <span>Statistiques</span>
+                    </a>
+                </li>
+
+                <!-- Divider -->
+                <hr class="sidebar-divider">
+
+
+                <!-- Nav Item - Pages Collapse Menu -->
+                <li class="nav-item">
+                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
+                       aria-expanded="true" aria-controls="collapseTwo">
+                        <i class="fas fa-fw fa-cog"></i>
+                        <span>Liste des utilisateurs</span>
+                    </a>
+                    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <a class="collapse-item" href="@Url.Action("ListeDeTousLesUsers", "Home")">Tous</a>
+                            <a class="collapse-item" href="@Url.Action("Favoris", "Users")">Liste des favoris</a>
+                            <a class="collapse-item" href="@Url.Action("BlackList", "Users")">Liste noire</a>
+                        </div>
+                    </div>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="@Url.Action("Reclamations", "Users")">
+                        <i class="fas fa-fw fa-exclamation-circle"></i>
+                        <span>Réclamations</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="@Url.Action("Index", "Categories")">
+                        <i class="fas fa-fw fa-sitemap"></i>
+                        <span>Catégories</span>
+                    </a>
+                </li>
+
+
+                <!-- Divider -->
+                <hr class="sidebar-divider d-none d-md-block">
+
+                <!-- Sidebar Toggler (Sidebar) -->
+                <div class="text-center d-none d-md-inline">
+                    <button class="rounded-circle border-0" id="sidebarToggle"></button>
+                </div>
+            </ul>
+            <!-- End of Sidebar -->
+        </div>
+        
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+
+            <!-- Main Content -->
+            <div id="content">
+
+                <!-- Begin Page Content -->
+                <div class="container-fluid">
+
+                    <!-- Page Heading -->
+                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                        <h1 class="h3 mb-0 text-gray-800"></h1>
+                    </div>
+
+                    <!-- Content Row -->
+                    <div class="row">
+
+                        <!-- Montant Total de ventes -->
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card borderMain shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold MainForeground text-uppercase mb-1">
+                                                Montant Total de Ventes
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">@AffichageDesCartes("Montant") Dh</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-money-bill-wave fa-2x MainForeground"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Earnings (Monthly) Card Example -->
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card borderMain shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold MainForeground text-uppercase mb-1">
+                                                Nombre total de catégories
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">@AffichageDesCartes("Categories")</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-sitemap fa-2x MainForeground"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Earnings (Monthly) Card Example -->
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card borderMain shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold MainForeground text-uppercase mb-1">
+                                                Nombre Total de produits
+                                            </div>
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col-auto">
+                                                    <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">@AffichageDesCartes("Produits")</div>
+                                                </div>
+                                                <div class="col">
+                                                    <!--
+                                                <div class="progress progress-sm mr-2">
+                                                    <div class="progress-bar bg-info" role="progressbar"
+                                                         style="width: 50%" aria-valuenow="50" aria-valuemin="0"
+                                                         aria-valuemax="100"></div>
+                                                </div>
+                                                    -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-cube fa-2x MainForeground"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pending Requests Card Example -->
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card borderMain shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold MainForeground text-uppercase mb-1">
+                                                Nombre Total d'Utilisateurs
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">@AffichageDesCartes("Users")</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-users fa-2x MainForeground"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <br />
+                    <!-- Content Row -->
+
+                    <div class="row">
+
+                        <!-- Area Chart -->
+                        <div class="col-xl-8 col-lg-7">
+                            <div class="card shadow mb-4">
+                                <!-- Card Header - Dropdown -->
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold MainForeground">Aperçu des ventes</h6>
+                                    <div class="dropdown no-arrow">
+                                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                                           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                                        </a>
+                                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                                             aria-labelledby="dropdownMenuLink">
+                                            <div class="dropdown-header">Vues Disponibles:</div>
+                                            <div class="dropdown-divider"></div>
+                                            <a class="dropdown-item" href="#" onclick="updateMensuelChart()">Mensuelle</a>
+                                            <a class="dropdown-item" href="#" onclick="updateAnnuelChart()">Annuelle</a>
+                                        </div>
+
+                                    </div>
+                                </div>
+                                <!-- Card Body -->
+                                <div class="card-body">
+                                    <div class="chart-area">
+                                        <canvas id="myAreaChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pie Chart -->
+                        <div class="col-xl-4 col-lg-5">
+                            <div class="card shadow mb-4">
+                                <!-- Card Header - Dropdown -->
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold MainForeground">Contribution aux ventes par catégorie</h6>
+                                </div>
+                                <!-- Card Body -->
+                                <div class="card-body">
+                                    <div class="chart-pie pt-4 pb-2">
+                                        <canvas id="myPieChart"></canvas>
+                                    </div>
+                                    <div class="mt-4 text-center small">
+                                        <span class="mr-2">
+                                            <i class="fas fa-circle MainForeground"></i> @labelsCategories[0]
+                                        </span>
+                                        <span class="mr-2">
+                                            <i class="fas fa-circle SecondForeground"></i> @labelsCategories[1]
+                                        </span>
+                                        <span class="mr-2">
+                                            <i class="fas fa-circle ThirdForeground"></i> @labelsCategories[2]
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+                <!-- /.container-fluid -->
+
+            </div>
+            <!-- End of Main Content -->
+
+
+        </div>
+        <!-- End of Content Wrapper -->
+
+    </div>
+    <!-- End of Page Wrapper -->
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+
+    <!-- Logout Modal-->
+    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
+                    <a class="btn btn-primary" href="login.html">Logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap core JavaScript-->
+    <script src="~/Content/vendor/jquery/jquery.min.js"></script>
+    <script src="~/Content/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+
+    <!-- Core plugin JavaScript-->
+    <script src="~/Content/vendor/jquery-easing/jquery.easing.min.js"></script>
+
+    <!-- Custom scripts for all pages-->
+    <script src="~/Content/js/sb-admin-2.min.js"></script>
+
+    <!-- Page level plugins -->
+    <script src="~/Content/vendor/chart.js/Chart.min.js"></script>
+
+    <!-- Page level custom scripts
+    <script src="~/Content/js/demo/chart-area-demo.js"></script>
+
+    <script src="~/Content/js/demo/chart-pie-demo.js"></script>
+
+    <!-- Votre code HTML existant -->
+
+    <script>
+        // Set new default font family and font color to mimic Bootstrap's default styling
+Chart.defaults.global.defaultFontFamily = 'Nunito', '-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
+Chart.defaults.global.defaultFontColor = '#858796';
+
+function number_format(number, decimals, dec_point, thousands_sep) {
+  // *     example: number_format(1234.56, 2, ',', ' ');
+  // *     return: '1 234,56'
+  number = (number + '').replace(',', '').replace(' ', '');
+  var n = !isFinite(+number) ? 0 : +number,
+    prec = !isFinite(+decimals) ? 0 : Math.abs(decimals),
+    sep = (typeof thousands_sep === 'undefined') ? ',' : thousands_sep,
+    dec = (typeof dec_point === 'undefined') ? '.' : dec_point,
+    s = '',
+    toFixedFix = function(n, prec) {
+      var k = Math.pow(10, prec);
+      return '' + Math.round(n * k) / k;
+    };
+  // Fix for IE parseFloat(0.55).toFixed(0) = 0;
+  s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.');
+  if (s[0].length > 3) {
+    s[0] = s[0].replace(/\B(?=(?:\d{3})+(?!\d))/g, sep);
+  }
+  if ((s[1] || '').length < prec) {
+    s[1] = s[1] || '';
+    s[1] += new Array(prec - s[1].length + 1).join('0');
+  }
+  return s.join(dec);
+}
+
+// Area Chart Example
+var ctx = document.getElementById("myAreaChart");
+var myLineChart = new Chart(ctx, {
+  type: 'line',
+  data: {
+      labels: @Html.Raw(Json.Encode(LabelsChartLineaireMensuelles)),
+    datasets: [{
+      label: "Montant de ventes",
+      lineTension: 0.3,
+      backgroundColor: "rgba(78, 115, 223, 0.05)",
+        borderColor: "#BF567D",
+      pointRadius: 3,
+        pointBackgroundColor: "#BF567D",
+        pointBorderColor: "#BF567D",
+      pointHoverRadius: 3,
+        pointHoverBackgroundColor: "#D9C5CE",
+        pointHoverBorderColor: "#D9C5CE",
+      pointHitRadius: 10,
+      pointBorderWidth: 2,
+      data: @Html.Raw(Json.Encode(ventesChartLineaireMensuelles)),
+    }],
+  },
+  options: {
+    maintainAspectRatio: false,
+    layout: {
+      padding: {
+        left: 10,
+        right: 25,
+        top: 25,
+        bottom: 0
+      }
+    },
+    scales: {
+      xAxes: [{
+        time: {
+          unit: 'date'
+        },
+        gridLines: {
+          display: false,
+          drawBorder: false
+        },
+        ticks: {
+          maxTicksLimit: 7
+        }
+      }],
+      yAxes: [{
+          ticks: {
+          beginAtZero: true,
+          maxTicksLimit: 5,
+          padding: 10,
+          // Include a dollar sign in the ticks
+          callback: function(value, index, values) {
+            return '$' + number_format(value);
+          }
+        },
+        gridLines: {
+          color: "rgb(234, 236, 244)",
+          zeroLineColor: "rgb(234, 236, 244)",
+          drawBorder: false,
+          borderDash: [2],
+          zeroLineBorderDash: [2]
+        }
+      }],
+    },
+    legend: {
+      display: false
+    },
+    tooltips: {
+      backgroundColor: "rgb(255,255,255)",
+      bodyFontColor: "#858796",
+      titleMarginBottom: 10,
+      titleFontColor: '#6e707e',
+      titleFontSize: 14,
+      borderColor: '#dddfeb',
+      borderWidth: 1,
+      xPadding: 15,
+      yPadding: 15,
+      displayColors: false,
+      intersect: false,
+      mode: 'index',
+      caretPadding: 10,
+      callbacks: {
+        label: function(tooltipItem, chart) {
+          var datasetLabel = chart.datasets[tooltipItem.datasetIndex].label || '';
+          return datasetLabel + ': $' + number_format(tooltipItem.yLabel);
+        }
+      }
+    }
+  }
+});
+
+        // Define the updateChart function
+        function updateAnnuelChart() {
+            if (typeof myLineChart !== 'undefined') {
+                // Update chart data
+                myLineChart.data.labels = @Html.Raw(Json.Encode(LabelsChartLineaireAnnuelles));
+                myLineChart.data.datasets[0].data = @Html.Raw(Json.Encode(ventesChartLineaireAnnuelles));
+
+                // Update the chart
+                myLineChart.update();
+            }
+        }
+
+        function updateMensuelChart() {
+    if (typeof myLineChart !== 'undefined') {
+        // Update chart data
+        myLineChart.data.labels = @Html.Raw(Json.Encode(LabelsChartLineaireMensuelles));
+        myLineChart.data.datasets[0].data = @Html.Raw(Json.Encode(ventesChartLineaireMensuelles));
+
+        // Update the chart
+        myLineChart.update();
+
+    }
+        }
+
+        // Set new default font family and font color to mimic Bootstrap's default styling
+        Chart.defaults.global.defaultFontFamily = 'Nunito', '-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
+        Chart.defaults.global.defaultFontColor = '#858796';
+
+        // Pie Chart Example
+        var ctx = document.getElementById("myPieChart");
+        var myPieChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: @Html.Raw(Json.Encode(labelsCategories)),
+                datasets: [{
+                    data: @Html.Raw(Json.Encode(dataCategories)),
+                    backgroundColor: ['#BF567D', '#D9B0C3', '#D9C5CE'],
+                    hoverBackgroundColor: ['#adb5bd', '#adb5bd', '#adb5bd'],
+                    hoverBorderColor: "#BF567D",
+                }],
+            },
+            options: {
+                maintainAspectRatio: false,
+                tooltips: {
+                    backgroundColor: "rgb(255,255,255)",
+                    bodyFontColor: "#858796",
+                    borderColor: '#dddfeb',
+                    borderWidth: 1,
+                    xPadding: 15,
+                    yPadding: 15,
+                    displayColors: false,
+                    caretPadding: 10,
+                },
+                legend: {
+                    display: false
+                },
+                cutoutPercentage: 80,
+            },
+        });
+
+
+
+
+    </script>
+
+</body>
+
+</html>

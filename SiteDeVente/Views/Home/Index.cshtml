@@ -1,0 +1,61 @@
+﻿@model List<SiteDeVente.Models.Categorie>
+@{
+    ViewBag.Title = "Home Page";
+}
+
+
+
+<!-- Featured Start -->
+<div class="container-fluid pt-5">
+    <div class="row px-xl-5 pb-3">
+        <div class="col-lg-3 col-md-6 col-sm-12 pb-1">
+            <div class="d-flex align-items-center border mb-4" style="padding: 30px;">
+                <h1 class="fa fa-check text-primary m-0 mr-3"></h1>
+                <h5 class="font-weight-semi-bold m-0">Produits de qualité</h5>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 col-sm-12 pb-1">
+            <div class="d-flex align-items-center border mb-4" style="padding: 30px;">
+                <h1 class="fa fa-shipping-fast text-primary m-0 mr-2"></h1>
+                <h5 class="font-weight-semi-bold m-0">Livraison gratuite</h5>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 col-sm-12 pb-1">
+            <div class="d-flex align-items-center border mb-4" style="padding: 30px;">
+                <h1 class="fas fa-exchange-alt text-primary m-0 mr-3"></h1>
+                <h5 class="font-weight-semi-bold m-0">Retour sous 14 jours</h5>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 col-sm-12 pb-1">
+            <div class="d-flex align-items-center border mb-4" style="padding: 30px;">
+                <h1 class="fa fa-phone-volume text-primary m-0 mr-3"></h1>
+                <h5 class="font-weight-semi-bold m-0">Support 24/7</h5>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Featured End -->
+
+@Html.Partial("_CategoryPartial", Model)
+
+<!-- Offer Start -->
+@{ Html.RenderAction("Offre", "Home"); }
+<!-- Offer End -->
+<!-- Products End -->
+<!-- Subscribe Start -->
+<!-- Subscribe End -->
+<!-- Products Start -->
+<div class="container-fluid pt-5" id="Nouveauté">
+    <div class="text-center mb-4">
+        <h2 class="section-title px-5"><span class="px-2">Nouveautés</span></h2>
+    </div>
+
+    <!-- Call the new action to render and include the partial view directly -->
+    @{ Html.RenderAction("ListeProduits", "Home"); }
+
+</div>
+<!-- Products End -->
+<!-- Vendor Start -->
+
+@{ Html.RenderAction("ImageCarousel", "Home"); }
+<!-- Vendor End -->

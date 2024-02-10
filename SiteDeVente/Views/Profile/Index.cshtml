@@ -1,0 +1,108 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = null;
+    var nomComplet = Session["UserNom"];
+    var email = Session["UserEmail"];
+    var image = Session["UserImage"] as string;
+
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>HTML</title>
+    <link rel="stylesheet" href="~/Content/profile/style.css">
+    <link rel="stylesheet" href="~/Content/profile/commandes.css">
+
+    <style>
+
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .content-container {
+            flex-grow: 1;
+            margin-left: 20px;
+            overflow-y: auto; /* Ajout de la propriété overflow-y */
+        }
+        
+        .navbar ul li.active a {
+            font-weight: bold; /* Style de mise en évidence */
+        }
+        /* ... Vos autres styles ... */
+    </style>
+</head>
+<body>
+    <div class="container" id="container">
+        <div class="brand">
+            <h3>Profile</h3>
+            <a href="#" id="toggle"><ion-icon name="menu"></ion-icon></a>
+        </div>
+        <div class="search">
+            <ion-icon name="search-outline"></ion-icon>
+            <input type="search" name="search" id="search" placeholder="Chercher">
+        </div>
+        <div class="navbar">
+            <ul>
+                <li @(ViewContext.RouteData.Values["action"].ToString() == "Infos" ? "class=active" : "")>
+                    <a href="/Profile/Infos"><ion-icon name="person-outline"></ion-icon><span>Mes Infos</span></a>
+                </li>
+                <br />
+                <li @(ViewContext.RouteData.Values["action"].ToString() == "Achats" ? "class=active" : "")>
+                    <a href="/Profile/Achats"><ion-icon name="chatbubbles-outline"></ion-icon><span>Mes Achats</span></a>
+                </li>
+                <br />
+                <li @(ViewContext.RouteData.Values["action"].ToString() == "Produits" ? "class=active" : "")>
+                    <a href="/Profile/Produits"><ion-icon name="pie-chart-outline"></ion-icon><span>Mes Produits</span></a>
+                </li>
+                <br />
+                <li @(ViewContext.RouteData.Values["action"].ToString() == "Historique" ? "class=active" : "")>
+                    <a href="/Profile/Historique"><ion-icon name="folder-open-outline"></ion-icon><span>Historique</span></a>
+                </li>
+                <br />
+                <li @(ViewContext.RouteData.Values["action"].ToString() == "WishList" ? "class=active" : "")>
+                    <a href="/Profile/WishList"><ion-icon name="heart-outline"></ion-icon><span>WishList</span></a>
+                </li>
+                <br />
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+            </ul>
+        </div>
+
+        <div class="user">
+            @if (!string.IsNullOrEmpty(image))
+            {
+                <img src="@Session["UserImage"]" alt="" width="4024" height="6048" loading="lazy">
+            }
+            else
+            {
+                <img src="/../img/User/avatarAnonyme.png" alt="" width="4024" height="6048" loading="lazy">
+            }
+
+            <div class="name">
+                <h5>@nomComplet</h5>
+                <span>@email</span>
+            </div>
+            <a href="@Url.Action("Logout", "LoginRegister")"><ion-icon name="log-out-outline"></ion-icon></a>
+        </div>
+        <div class="content-container">
+        </div>
+    </div>
+    <div class="content-container">
+        @RenderBody()
+    </div>
+
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+    <script src="~/Scripts/profile/main.js"></script>
+
+</body>
+</html>

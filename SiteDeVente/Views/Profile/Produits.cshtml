@@ -1,0 +1,77 @@
+﻿@{
+    ViewBag.Title = "Produits";
+    Layout = "~/Views/Profile/Index.cshtml";
+    <link rel="stylesheet" href="~/Content/profile/produits.css">
+
+
+}
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto|Varela+Round">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
+    <style>
+        .table.table-striped.table-hover {
+            width: 100%;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+    <script>$(document).ready(function () {
+            $('.datatable').DataTable({
+                language: {
+                    url: "https://cdn.datatables.net/plug-ins/1.10.25/i18n/French.json"
+                }
+            });
+            $('[data-toggle="tooltip"]').tooltip();
+        });</script>
+</head>
+<body>
+    <div class="container-xl">
+        <div class="table-responsive">
+            <div class="table-wrapper">
+                <div class="table-title">
+                    <div class="row">
+                        <div class="col-sm-5">
+                            <h2>Mes <b>Produits</b></h2>
+                        </div>
+                    </div>
+                </div>
+                <table class="table table-striped table-hover datatable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nom</th>
+                            <th>Description</th>
+                            <th>Prix</th>
+                            <th>Quantite</th>
+                            <th>Solde</th>
+                            <th>Categorie</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var produit in Model)
+                        {
+                            <tr>
+                                <td>@produit.idProduit</td>
+                                <td>@produit.nom</td>
+                                <td>@produit.description</td>
+                                <td>@produit.prix MAD</td>
+                                <td>@produit.quantite</td>
+                                <td>@produit.pourcentageSolde%</td>
+                                <td>@produit.Categorie.nom</td>
+                                <td>
+                                    <a href="@Url.Action("Details","Produits", new { id = produit.idProduit })" class="settings" title="View" data-toggle="tooltip"><i class="material-icons">control_point</i></a>
+                                    <a href="@Url.Action("DeleteProduit","Profile", new { id = produit.idProduit })" class="delete" title="Supprimer" data-toggle="tooltip"><i class="material-icons">&#xE5C9;</i></a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>

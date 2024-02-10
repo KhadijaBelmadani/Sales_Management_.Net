@@ -1,0 +1,640 @@
+﻿@model SiteDeVente.Models.User
+@{
+    ViewBag.Title = "Details";
+    Layout= "~/Views/Shared/AdminLayout.cshtml";
+    string[][] results = null;
+    string[] dates;
+    int userID = Model.id;
+    var nomComplet = Session["UserNom"];
+    var email = Session["UserEmail"];
+    var image = Session["UserImage"];
+    string userName = Model.nomComplet;
+    string connectionString = "data source=(LocalDB)\\MSSQLLocalDB;attachdbfilename=|DataDirectory|VenteDB.mdf;integrated security=True;App=EntityFramework";
+
+
+    void GetUserActivityData()
+    {
+        List<string[]> resultList = new List<string[]>();
+
+        using (System.Data.SqlClient.SqlConnection connection = new System.Data.SqlClient.SqlConnection(connectionString))
+        {
+            connection.Open();
+
+            string sqlQuery = @"
+        SELECT f.id AS ID, 'Favoriser' AS Type, f.date
+        FROM Favoriser f
+        INNER JOIN Produit p ON f.idProduitF = p.idProduit
+        WHERE f.idUserF = @UserID
+
+        UNION ALL
+
+        SELECT a.Id AS ID, 'Acheter' AS Type, a.date
+        FROM Acheter a
+        INNER JOIN Produit p ON a.idProduitF = p.idProduit
+        WHERE a.idUserF = @UserID
+
+        UNION ALL
+
+        SELECT a.Id AS ID, 'Vendre' AS Type, a.date
+        FROM Acheter a
+        INNER JOIN Produit p ON a.idProduitF = p.idProduit
+        WHERE p.idUserF = @UserID
+
+        UNION ALL
+
+        SELECT s.Id AS ID, 'Signaler' AS Type, s.date
+        FROM Signaler s
+        WHERE s.idUserSignalant = @UserID
+
+        UNION ALL
+
+        SELECT s.Id AS ID, 'Signalee' AS Type, s.date
+        FROM Signaler s
+        WHERE s.idUserSignale = @UserID
+
+        UNION ALL
+
+        SELECT p.idProduit AS ID, 'Produit' AS Type, p.date
+        FROM Produit p
+        WHERE p.idUserF = @UserID
+
+        UNION ALL
+
+        SELECT u.id AS ID, 'User' AS Type, u.date
+        FROM [User] u
+        WHERE u.id = @UserID
+
+        ORDER BY date ASC;";
+
+            using (System.Data.SqlClient.SqlCommand command = new System.Data.SqlClient.SqlCommand(sqlQuery, connection))
+            {
+                command.Parameters.AddWithValue("@UserID", userID);
+
+                using (System.Data.SqlClient.SqlDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        List<string> rowValues = new List<string>();
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            rowValues.Add(reader[i].ToString());
+                        }
+                        resultList.Add(rowValues.ToArray());
+                    }
+                }
+            }
+        }
+
+        results = resultList.ToArray();
+    }
+
+    void AffichageDesDatesDansTimeLine()
+    {
+        List<string> resultList = new List<string>();
+
+        using (System.Data.SqlClient.SqlConnection connection = new System.Data.SqlClient.SqlConnection(connectionString))
+        {
+            connection.Open();
+
+            string sqlQuery = @"
+    SELECT DISTINCT Date
+    FROM (
+        SELECT f.date
+        FROM Favoriser f
+        INNER JOIN Produit p ON f.idProduitF = p.idProduit
+        WHERE f.idUserF = @UserID
+
+        UNION ALL
+
+        SELECT a.date
+        FROM Acheter a
+        INNER JOIN Produit p ON a.idProduitF = p.idProduit
+        WHERE a.idUserF = @UserID
+
+        UNION ALL
+
+        SELECT a.date
+        FROM Acheter a
+        INNER JOIN Produit p ON a.idProduitF = p.idProduit
+        WHERE p.idUserF = @UserID
+
+        UNION ALL
+
+        SELECT s.date
+        FROM Signaler s
+        WHERE s.idUserSignalant = @UserID
+
+        UNION ALL
+
+        SELECT s.date
+        FROM Signaler s
+        WHERE s.idUserSignale = @UserID
+
+        UNION ALL
+
+        SELECT p.date
+        FROM Produit p
+        WHERE p.idUserF = @UserID
+
+        UNION ALL
+
+        SELECT u.date
+        FROM [User] u
+        WHERE u.id = @UserID
+    ) AS AllDates
+    ORDER BY Date ASC;
+    ";
+
+            using (System.Data.SqlClient.SqlCommand command = new System.Data.SqlClient.SqlCommand(sqlQuery, connection))
+            {
+                command.Parameters.AddWithValue("@UserID", userID);
+
+                using (System.Data.SqlClient.SqlDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        if (reader["Date"] != DBNull.Value) // Check for DBNull.Value if the column can be null
+                        {
+                            string dateValue = ((DateTime)reader["Date"]).ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("fr-FR"));
+                            resultList.Add(dateValue);
+                        }
+                    }
+
+                }
+            }
+        }
+
+        dates = resultList.ToArray();
+
+    }
+
+    string ContenuDesActiviteDansTimeline(string id, string typeOfActivity, string date)
+    {
+
+        string entete, corps, ligneDeCode = null;
+        string[] details = null;
+        using (System.Data.SqlClient.SqlConnection connection = new System.Data.SqlClient.SqlConnection(connectionString))
+        {
+            connection.Open();
+            string tableName = "";
+            string selectQuery = "";
+
+            switch (typeOfActivity)
+            {
+                case "Signalee":
+                    details = new string[3];
+                    tableName = "Signaler";
+                    selectQuery = @"SELECT s.idUserSignalant, u.nomComplet, s.message
+                            FROM [User] u, Signaler s
+                            WHERE s.idUserSignalant = u.id AND s.id = @id;
+                            ";
+                    break;
+                case "Signaler":
+                    details = new string[3];
+                    tableName = "Signaler";
+                    selectQuery = @"SELECT s.idUserSignale, u.nomComplet, s.message
+                        FROM Signaler s
+                        INNER JOIN [User] u ON s.idUserSignale = u.id
+                        WHERE s.id = @id;
+                            ";
+                    break;
+                case "Favoriser":
+                    details = new string[5];
+                    tableName = "Favoriser";
+                    selectQuery = @"SELECT f.idProduitF, p.image, p.nom, p.prix, c.nom AS nomCategorie
+                            FROM Favoriser f
+                            INNER JOIN Produit p ON f.idProduitF = p.idProduit
+                            INNER JOIN Categorie c ON p.idCategorieF = c.idCategorie
+                            WHERE f.id = 1;
+                            ";
+                    break;
+                case "Acheter":
+                    details = new string[3];
+                    tableName = "Acheter";
+                    selectQuery = @"SELECT p.nom, p.prix, a.quantite FROM Acheter a, Produit p
+                            WHERE (a.id = @id AND a.idProduitF=p.idProduit)";
+                    break;
+                case "Vendre":
+                    details = new string[3];
+                    tableName = "Acheter";
+                    selectQuery = @"SELECT p.nom, p.prix, a.quantite FROM Acheter a, Produit p
+                            WHERE (a.id = @id AND a.idProduitF=p.idProduit)";
+                    break;
+                case "Produit":
+                    tableName = "Produit";
+                    details = new string[5];
+                    selectQuery = @"SELECT p.idProduit, p.image,p.nom,p.prix,c.nom
+                            FROM Produit p, Categorie c
+                            WHERE (p.idProduit = @id AND p.idCategorieF=c.idCategorie)";
+                    break;
+                case "User":
+                    tableName = "User";
+                    details = new string[12];
+                    selectQuery = $"SELECT * FROM [User] WHERE id = @id";
+                    break;
+                default:
+                    break;
+            }
+
+            if (!string.IsNullOrEmpty(tableName) && !string.IsNullOrEmpty(selectQuery))
+            {
+                using (System.Data.SqlClient.SqlCommand command = new System.Data.SqlClient.SqlCommand(selectQuery, connection))
+                {
+                    command.Parameters.AddWithValue("@id", id);
+
+                    using (System.Data.SqlClient.SqlDataReader reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                details[i] = reader[i].ToString();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        string dateTime = null;
+        if (DateTime.TryParse(date, out DateTime formattedTime))
+        {
+            dateTime = formattedTime.ToString("h:mm tt");
+        }
+
+
+
+        switch (typeOfActivity)
+        {
+            case "Signalee":
+                ligneDeCode = $"<div>" +
+                $"<i class=\"fas fa-exclamation-triangle bg-red\"></i>" +
+                $"<div class=\"timeline-item\">" +
+                    $"<span class=\"time\">" +
+                        $"<i class=\"fas fa-clock\"></i> {@dateTime}" +
+                    $"</span>" +
+                    $"<h3 class=\"timeline-header SecondBackground\">" +
+                        $"{@userName} est signalé par " +
+                        $"<a href=\"/Users/Details/{@details[0]}\" class=\"btn buttonMain\">{@details[1]}</a>" +
+                    $"</h3>" +
+                    $"<div class=\"timeline-body\">" +
+                        $"<p>Le contenu du message du signal :</p>" +
+                        $"<p>{@details[2]}</p>" +
+                    $"</div>" +
+                $"</div>" +
+            $"</div>";
+                break;
+
+            case "Signaler":
+                ligneDeCode = $"<div>" +
+                $"<i class=\"fas fa-exclamation-triangle bg-red\"></i>" +
+                $"<div class=\"timeline-item\">" +
+                    $"<span class=\"time\">" +
+                        $"<i class=\"fas fa-clock\"></i> {@dateTime}" +
+                    $"</span>" +
+                    $"<h3 class=\"timeline-header SecondBackground\">" +
+                        $"{@userName} a signalé " +
+                        $"<a href=\"/Users/Details/{@details[0]}\" class=\"btn buttonMain\">{@details[1]}</a>" +
+                    $"</h3>" +
+                    $"<div class=\"timeline-body\">" +
+                        $"<p>Le contenu du message du signal :</p>" +
+                        $"<p>{@details[2]}</p>" +
+                    $"</div>" +
+                $"</div>" +
+            $"</div>";
+                break;
+
+            case "Favoriser":
+                //f.idProduitF, p.image,p.nom,p.prix,c.nom
+                ligneDeCode = $"<div>" +
+                $"<i class=\"fas fa-heart bg-red\"></i>" +
+                $"<div class=\"timeline-item\">" +
+                    $"<span class=\"time\">" +
+                        $"<i class=\"fas fa-clock\"></i> {@dateTime}" +
+                    $"</span>" +
+                    $"<h3 class=\"timeline-header SecondBackground\">" +
+                        $"{@userName} a ajouté le produit " +
+                        $"\"{@details[2]}\" à sa WishList" +
+                    $"</h3>" +
+                    $"<div class=\"timeline-body\">" +
+                        $"<img src=\"{@details[1]}\" alt=\"Your Photo\" class=\"img-fluid rounded-circle\" style=\"width: 100px;\">" +
+                            $"<p>Prix : {@details[3]} Dhs</p>" +
+                            $"<p>Catégorie mère : {@details[4]}</p>" +
+                        $"</div>" +
+                    $"</div>" +
+                $"</div>";
+                break;
+            case "Acheter":
+                //p.nom, p.prix, a.quantite
+                double prixTotal = Convert.ToDouble(details[2]) * Convert.ToDouble(details[1]);
+                ligneDeCode = $"<div>" +
+                $"<i class=\"fas fa-shopping-cart bg-red\"></i>" +
+                $"<div class=\"timeline-item\">" +
+                    $"<span class=\"time\">" +
+                        $"<i class=\"fas fa-clock\"></i> {@dateTime}" +
+                    $"</span>" +
+                    $"<h3 class=\"timeline-header SecondBackground\">" +
+                        $"{@userName} a acheté {@details[2]} unités du produit " +
+                        $"\"{@details[0]}\" avec un pris total de {@prixTotal} Dhs" +
+                    $"</h3>" +
+                $"</div>";
+
+                break;
+
+
+            case "Vendre":
+                //p.nom, p.prix, a.quantite
+                double prixTotalVente = Convert.ToDouble(details[2]) * Convert.ToDouble(details[1]);
+                ligneDeCode = $"<div>" +
+                $"<i class=\"fas fa-dollar-sign bg-red\"></i>" +
+                $"<div class=\"timeline-item\">" +
+                    $"<span class=\"time\">" +
+                        $"<i class=\"fas fa-clock\"></i> {@dateTime}" +
+                    $"</span>" +
+                    $"<h3 class=\"timeline-header SecondBackground\">" +
+                        $"{@userName} a vendu {@details[2]} unités du produit " +
+                        $"\"{@details[0]}\" avec un pris total de {@prixTotalVente} Dhs" +
+                    $"</h3>" +
+                $"</div>";
+                break;
+
+            case "Produit":
+                //p.idProduit, p.image,p.nom,p.prix,c.nom
+                ligneDeCode = $"<div>" +
+        $"<i class=\"fas fa-plus-circle bg-red\"></i>" +
+        $"<div class=\"timeline-item\">" +
+            $"<span class=\"time\">" +
+                $"<i class=\"fas fa-clock\"></i> {@dateTime}" +
+            $"</span>" +
+            $"<h3 class=\"timeline-header SecondBackground\">" +
+                $"{@userName} a ajouté le produit " +
+                $"\"{@details[2]}\" à ses articles à vendre" +
+            $"</h3>" +
+            $"<div class=\"timeline-body\">" +
+                $"<img src=\"{@details[1]}\" alt=\"Your Photo\" class=\"img-fluid rounded-circle\" style=\"width: 100px;\">" +
+                    $"<p>Prix : {@details[3]} Dhs</p>" +
+                    $"<p>Catégorie mère : {@details[4]}</p>" +
+                $"</div>" +
+            $"</div>" +
+        $"</div>";
+                break;
+            case "User":
+                ligneDeCode = $"<div>" +
+                $"<i class=\"fas fa-user-plus bg-red\"></i>" +
+                $"<div class=\"timeline-item\">" +
+                    $"<span class=\"time\">" +
+                        $"<i class=\"fas fa-clock\"></i> {@dateTime}" +
+                    $"</span>" +
+                    $"<h3 class=\"timeline-header SecondBackground\">" +
+                        $"{@userName} a créé son compte" +
+                    $"</h3>" +
+                    $"<div class=\"timeline-body\">" +
+                        $"<img src=\"{@details[3]}\" alt=\"Your Photo\" class=\"img-fluid rounded-circle\" style=\"width: 100px;\">" +
+                            $"<p>Type du compte: {@details[1]}</p>" +
+                            $"<p>Adresse: {@details[4]}</p>" +
+                            $"<p>Numéro du Téléphone: {@details[6]}</p>" +
+                            $"<p>E-mail: {@details[7]}</p>" +
+                            $"<p>Mot de passe: {@details[8]}</p>" +
+                        $"</div>" +
+                    $"</div>" +
+                $"</div>";
+                break;
+            default:
+                // Handle unsupported typeOfActivity
+                break;
+        }
+        return ligneDeCode;
+
+    }
+
+
+    //void ContenuDesActiviteDansPopUP(string id, string typeOfActivity)
+    //{
+
+    //}
+
+
+    //appel de nos fonctions
+    GetUserActivityData();
+
+}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@nomComplet (admin) - Détails sur @userName</title>
+
+
+   
+
+    <!-- Custom styles for this template -->
+    <link href="~/Content/css/sb-admin-2.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this page -->
+    <link href="~/Content/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
+    <link href="~/Content/css/MyOwnTheme.css" rel="stylesheet">
+
+
+    <style>
+        :root {
+            --mainColor: #BF567D !important;
+            --primary: var(--mainColor) !important;
+            --secondColor: #D9B0C3;
+            --thirdColor: #D9C5CE;
+            --fourthColor: #FFFFFF;
+        }
+
+        .buttonMain {
+            color: var(--mainColor);
+            border-color: var(--mainColor);
+        }
+
+        .timeline::before {
+            background-color: var(--mainColor);
+        }
+
+        .timeline > div > .fa, .timeline > div > .fab, .timeline > div > .fad, .timeline > div > .fal, .timeline > div > .far, .timeline > div > .fas, .timeline > div > .ion, .timeline > div > .svg-inline--fa {
+            background-color: var(--mainColor);
+        }
+
+        p {
+            color: #000000;
+        }
+        .sidebar-divider {
+            background-color: #FFFFFF;
+        }
+    </style>
+
+</head>
+
+<body id="page-top" class="MainBackground" style="margin-top: 0 !important;">
+
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+
+        <div class="sidebar MainBackground">
+            <!-- Sidebar -->
+            <ul class="navbar-nav sidebar sidebar-dark accordion MainBackground" id="accordionSidebar">
+
+                <!-- Sidebar - Brand -->
+                <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
+                    <div>
+                        <img src="@image" alt="" class="img-fluid rounded-circle" width="50">
+                    </div>
+                    <div class="sidebar-brand-text mx-3">@nomComplet</div>
+                </a>
+
+                <!-- Divider -->
+                <hr class="sidebar-divider my-0">
+
+                <!-- Nav Item - Dashboard -->
+                <li class="nav-item">
+                    <a class="nav-link" href="@Url.Action("Admin", "Home")">
+                        <i class="fas fa-fw fa-chart-area"></i>
+                        <span>Statistiques</span>
+                    </a>
+                </li>
+
+                <!-- Divider -->
+                <hr class="sidebar-divider my-0" style="background-color:#FFFFFF;">
+
+
+                <!-- Nav Item - Pages Collapse Menu -->
+                <li class="nav-item active">
+                    <a class="nav-link" href="#" data-toggle="collapse" data-target="#collapseTwo"
+                       aria-expanded="true" aria-controls="collapseTwo">
+                        <i class="fas fa-fw fa-cog"></i>
+                        <span>Liste des utilisateurs</span>
+                    </a>
+                    <div id="collapseTwo" class="collapse show" aria-labelledby="headingTwo" data-parent="#accordionSidebar" style>
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <a class="collapse-item active" href="@Url.Action("ListeDeTousLesUsers", "Home")">Tous</a>
+                            <a class="collapse-item" href="@Url.Action("Favoris", "Users")">Liste des favoris</a>
+                            <a class="collapse-item" href="@Url.Action("BlackList", "Users")">Liste noire</a>
+                        </div>
+                    </div>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="@Url.Action("Reclamations", "Users")">
+                        <i class="fas fa-fw fa-exclamation-circle"></i>
+                        <span>Réclamations</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="@Url.Action("Index", "Categories")">
+                        <i class="fas fa-fw fa-sitemap"></i>
+                        <span>Catégories</span>
+                    </a>
+                </li>
+
+
+                <!-- Divider -->
+                <hr class="sidebar-divider d-none d-md-block">
+
+                <!-- Sidebar Toggler (Sidebar) -->
+                <div class="text-center d-none d-md-inline">
+                    <button class="rounded-circle border-0" id="sidebarToggle"></button>
+                </div>
+            </ul>
+            <!-- End of Sidebar -->
+        </div>
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+
+            <!-- Main Content -->
+            <div id="content">
+
+
+                <ul class="navbar-nav ml-auto">
+
+                    <!-- Begin Page Content -->
+                    <div class="container-fluid">
+                        <h2 class="MainForeground" style="text-align:center;">Historique de l'utilisateur "@userName"</h2>
+                        <!-- Timelime example  -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <!-- The time line -->
+                                <div class="timeline">
+
+                                    @{
+                                        AffichageDesDatesDansTimeLine();
+                                    }
+                                    @foreach (string s in dates)
+                                    {
+                                        <div class="time-label">
+                                            <span class="bg-red" style="background-color:#BF567D">@s</span>
+                                        </div>
+                                        foreach (string[] resultRow in results)
+                                        {
+                                            if (resultRow != null && resultRow.Length > 2)
+                                            {
+                                                string resultDateStr = resultRow[2];
+                                                if (DateTime.TryParse(resultDateStr, out DateTime resultDate))
+                                                {
+                                                    string formattedResultDate = resultDate.ToString("d MMMM yyyy", System.Globalization.CultureInfo.GetCultureInfo("fr-FR"));
+                                                    if (DateTime.TryParseExact(s, "d MMMM yyyy", System.Globalization.CultureInfo.GetCultureInfo("fr-FR"), System.Globalization.DateTimeStyles.None, out DateTime inputDate))
+                                                    {
+                                                        if (resultDate.Date == inputDate.Date)
+                                                        {
+                                                            string ligneDeCode = ContenuDesActiviteDansTimeline(@resultRow[0], @resultRow[1], @resultRow[2]);
+                                                            <div class="timeline">
+                                                                @Html.Raw(ligneDeCode)
+                                                            </div>
+                                                        }
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    <div>
+                                        <i class="fas fa-flag-checkered bg-red"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- /.col -->
+                        </div>
+                    </div>
+                    <!-- /.timeline -->
+                    <!-- /.content -->
+            </div>
+            <!-- /.content-wrapper -->
+            <!-- Control Sidebar -->
+            <aside class="control-sidebar control-sidebar-dark">
+                <!-- Control sidebar content goes here -->
+            </aside>
+            <!-- /.control-sidebar -->
+        </div>
+    </div>
+    <!-- ./wrapper -->
+
+
+
+    <link href="~/Content/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet" />
+
+        <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+        <script src="//cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+        <script src="~/Content/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+        <!-- Core plugin JavaScript-->
+        <script src="~/Content/vendor/jquery-easing/jquery.easing.min.js"></script>
+
+        <!-- Custom scripts for all pages-->
+        <script src="~/Content/js/sb-admin-2.min.js"></script>
+
+        <!-- Page level plugins -->
+        <script src="~/Content/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+
+        <!-- Page level custom scripts -->
+        <script src="~/Content/js/demo/datatables-demo.js"></script>
+
+</body>
+</html>

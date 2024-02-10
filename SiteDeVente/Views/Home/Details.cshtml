@@ -1,0 +1,94 @@
+﻿@model SiteDeVente.Models.Produit
+
+<div class="container-fluid py-5">
+    <div class="row px-xl-5">
+        <div class="col-lg-5 pb-5 d-flex align-items-stretch">
+            <div class="product-image-container border p-3 w-100">
+                <img class="w-100 h-100" src="/..@Model.image" alt="Product Image">
+            </div>
+        </div>
+        <div class="col-lg-7 pb-5 d-flex align-items-stretch">
+            <div class="product-info-container border p-3 w-100">
+                <h3 class="font-weight-semi-bold">@Model.nom</h3>
+                <div class="d-flex mb-3">
+                    Ajoutez ici le code pour afficher la note et le nombre de critiques
+                </div>
+                <h3 class="font-weight-semi-bold mb-4">
+                    @if (Model.pourcentageSolde != 0)
+                    {
+                        // Calculer le nouveau prix si le pourcentage de réduction est différent de zéro
+                        decimal? nouveauPrix = Model.prix - (Model.prix * Model.pourcentageSolde / 100);
+                        @($"DH{(nouveauPrix.HasValue ? nouveauPrix.Value : 0)}")
+                    }
+                    else
+                    {
+                        @($"DH{Model.prix}")
+                    }
+                </h3>
+                <p class="mb-4">@Model.description</p>
+                <div>
+                    <p class="font-weight-bold">Quantité disponible: @Model.quantite</p>
+
+                    @if (Model.Categorie.attributsSpecifiques != null && Model.valeursSpecifiques != null)
+                    {
+                        var attributs = Model.Categorie.attributsSpecifiques.Split(new[] { "//" }, StringSplitOptions.RemoveEmptyEntries);
+                        var valeurs = Model.valeursSpecifiques.Split(new[] { "//" }, StringSplitOptions.RemoveEmptyEntries);
+
+                        for (int i = 0; i < Math.Min(attributs.Length, valeurs.Length); i++)
+                        {
+                            <p class="font-weight-bold">@attributs[i]: @valeurs[i]</p>
+                        }
+                    }
+                    @if (Model.User != null)
+                    {
+                        <div>
+                            <p class="font-weight-bold">Propriétaire: @Model.User.nomComplet</p>
+                            <p class="font-weight-bold">Téléphone du propriétaire: @Model.User.tel</p>
+                        </div>
+                    }
+
+                    Ajouter ici le code pour afficher d'autres attributs spécifiques de la catégorie
+                    Ajouter ici le code pour afficher d'autres valeurs spécifiques du produit
+                </div>
+                <div class="d-flex align-items-center mb-4 pt-2">
+                    <div class="input-group quantity mr-3" style="width: 130px;">
+                        <div class="input-group-btn">
+                            <button class="btn btn-primary btn-minus">
+                                <i class="fa fa-minus"></i>
+                            </button>
+                        </div>
+                        <input type="text" class="form-control bg-secondary text-center" value="1">
+                        <div class="input-group-btn">
+                            <button class="btn btn-primary btn-plus">
+                                <i class="fa fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary px-3"><i class="fa fa-shopping-cart mr-1"></i> Acheter</button>
+                </div>
+
+                Afficher la quantité et les attributs spécifiques
+
+
+                <div class="d-flex pt-2">
+                    <p class="text-dark font-weight-medium mb-0 mr-2">Share on:</p>
+                    <div class="d-inline-flex">
+                        <a class="text-dark px-2" href="">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a class="text-dark px-2" href="">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a class="text-dark px-2" href="">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                        <a class="text-dark px-2" href="">
+                            <i class="fab fa-pinterest"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@{ Html.RenderAction("ListeProduitssuggesion", "Home", new { produitId = Model.idProduit }); }

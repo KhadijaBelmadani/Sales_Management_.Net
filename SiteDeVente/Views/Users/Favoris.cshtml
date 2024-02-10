@@ -1,0 +1,266 @@
+﻿@model IEnumerable<SiteDeVente.Models.User>
+
+@{
+    Layout = "~/Views/Shared/AdminLayout.cshtml";
+    ViewBag.Title = "Favoris";
+    var nomComplet = Session["UserNom"];
+    var email = Session["UserEmail"];
+    var image = Session["UserImage"];
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>@nomComplet (admin) - Favoris</title>
+
+   
+    <!-- Custom styles for this template -->
+    <link href="~/Content/css/sb-admin-2.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this page -->
+    <link href="~/Content/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
+
+    <link href="~/Content/css/MyOwnTheme.css" rel="stylesheet">
+
+
+    <style>
+        :root {
+            --mainColor: #BF567D !important;
+            --primary: var(--mainColor) !important;
+            --secondColor: #D9B0C3;
+            --thirdColor: #D9C5CE;
+            --fourthColor: #FFFFFF;
+        }
+
+        .buttonMain {
+            color: var(--mainColor);
+            border-color: var(--mainColor);
+        }
+
+        p {
+            color: #000000;
+        }
+        .sidebar-divider {
+            background-color: #FFFFFF;
+        }
+    </style>
+
+</head>
+
+<body id="page-top" class="MainBackground" style="margin-top: 0 !important;">
+
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+
+        <div class="sidebar MainBackground">
+            <!-- Sidebar -->
+            <ul class="navbar-nav sidebar sidebar-dark accordion MainBackground" id="accordionSidebar">
+
+                <!-- Sidebar - Brand -->
+                <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
+                    <div>
+                        <img src="@image" alt="" class="img-fluid rounded-circle" width="50">
+                    </div>
+                    <div class="sidebar-brand-text mx-3">@nomComplet</div>
+                </a>
+
+                <!-- Divider -->
+                <hr class="sidebar-divider my-0">
+
+                <!-- Nav Item - Dashboard -->
+                <li class="nav-item">
+                    <a class="nav-link" href="@Url.Action("Admin", "Home")">
+                        <i class="fas fa-fw fa-chart-area"></i>
+                        <span>Statistiques</span>
+                    </a>
+                </li>
+
+                <!-- Divider -->
+                <hr class="sidebar-divider my-0" style="background-color:#FFFFFF;">
+
+
+                <!-- Nav Item - Pages Collapse Menu -->
+                <li class="nav-item active">
+                    <a class="nav-link" href="#" data-toggle="collapse" data-target="#collapseTwo"
+                       aria-expanded="true" aria-controls="collapseTwo">
+                        <i class="fas fa-fw fa-cog"></i>
+                        <span>Liste des utilisateurs</span>
+                    </a>
+                    <div id="collapseTwo" class="collapse show" aria-labelledby="headingTwo" data-parent="#accordionSidebar" style>
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <a class="collapse-item" href="@Url.Action("ListeDeTousLesUsers", "Home")">Tous</a>
+                            <a class="collapse-item active" href="@Url.Action("Favoris", "Users")">Liste des favoris</a>
+                            <a class="collapse-item" href="@Url.Action("BlackList", "Users")">Liste noire</a>
+                        </div>
+                    </div>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="@Url.Action("Reclamations", "Users")">
+                        <i class="fas fa-fw fa-exclamation-circle"></i>
+                        <span>Réclamations</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="@Url.Action("Index", "Categories")">
+                        <i class="fas fa-fw fa-sitemap"></i>
+                        <span>Catégories</span>
+                    </a>
+                </li>
+
+
+                <!-- Divider -->
+                <hr class="sidebar-divider d-none d-md-block">
+
+                <!-- Sidebar Toggler (Sidebar) -->
+                <div class="text-center d-none d-md-inline">
+                    <button class="rounded-circle border-0" id="sidebarToggle"></button>
+                </div>
+            </ul>
+            <!-- End of Sidebar -->
+        </div>
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+
+            <!-- Main Content -->
+            <div id="content">
+
+
+                <ul class="navbar-nav ml-auto">
+
+                    <!-- Begin Page Content -->
+                    <div class="container-fluid">
+                        <!-- DataTales Example -->
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold MainForeground">Les Utilisateurs Favoris</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
+                                        <thead>
+                                            <tr>
+                                                <th>
+                                                </th>
+                                                <th>
+                                                    Nom Complet
+                                                </th>
+                                                <th>
+                                                    Rôle
+                                                </th>
+                                                <th>
+                                                    Adresse
+                                                </th>
+                                                <th>
+                                                    Spécialité
+                                                </th>
+                                                <th>
+                                                    Téléphone
+                                                </th>
+                                                <th>
+                                                    E-mail
+                                                </th>
+                                                <th>
+                                                    Mot de passe
+                                                </th>
+                                                <th>
+                                                    Retirer des favoris
+                                                </th>
+                                                <th>
+                                                    Consulter la page
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in Model)
+                                            {
+                                                if (item.favoris == 1)
+                                                {
+                                                    <tr>
+                                                        <td style="vertical-align: middle;">
+                                                            <img src="@item.image" alt="Your Photo" class="img-fluid rounded-circle" style="width: 50px;">
+                                                        </td>
+                                                        <td style="vertical-align: middle;">
+                                                            @Html.DisplayFor(modelItem => item.nomComplet)
+                                                        </td>
+                                                        <td style="vertical-align: middle;">
+                                                            @Html.DisplayFor(modelItem => item.role)
+                                                        </td>
+                                                        <td style="vertical-align: middle;">
+                                                            @Html.DisplayFor(modelItem => item.adresse)
+                                                        </td>
+                                                        <td style="vertical-align: middle;">
+                                                            @Html.DisplayFor(modelItem => item.specialite)
+                                                        </td>
+                                                        <td style="vertical-align: middle;">
+                                                            @Html.DisplayFor(modelItem => item.tel)
+                                                        </td>
+                                                        <td style="vertical-align: middle;">
+                                                            @Html.DisplayFor(modelItem => item.email)
+                                                        </td>
+                                                        <td style="vertical-align: middle;">
+                                                            @Html.DisplayFor(modelItem => item.password)
+                                                        </td>
+                                                        <td style="vertical-align: middle;">
+                                                            <a href="@Url.Action("RemoveFromFavorites", new { id = item.id })" class="btn buttonMain"><i class='fas fa-heart-broken'></i></a>
+                                                        </td>
+                                                        <td style="vertical-align: middle;">
+                                                            <a href="@Url.Action("Details", new { id = item.id })" class="btn buttonMain"><i class='fas fa-eye'></i></a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <!-- /.container-fluid -->
+
+            </div>
+            <!-- End of Main Content -->
+
+        </div>
+        <!-- End of Content Wrapper -->
+
+    </div>
+    <!-- End of Page Wrapper -->
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+
+
+
+    <link href="~/Content/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet" />
+
+        <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+        <script src="//cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+        <script src="~/Content/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+        <!-- Core plugin JavaScript-->
+        <script src="~/Content/vendor/jquery-easing/jquery.easing.min.js"></script>
+
+        <!-- Custom scripts for all pages-->
+        <script src="~/Content/js/sb-admin-2.min.js"></script>
+
+        <!-- Page level plugins -->
+        <script src="~/Content/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+
+        <!-- Page level custom scripts -->
+        <script src="~/Content/js/demo/datatables-demo.js"></script>
+
+</body>
+
+</html> 

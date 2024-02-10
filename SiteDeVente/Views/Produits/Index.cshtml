@@ -1,0 +1,201 @@
+﻿@model IEnumerable<SiteDeVente.Models.Produit>
+
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+
+<div style="text-align:right;">
+    @if (Session["UserId"] == null)
+    {
+        <span style="font-weight:bold;">Vous devez <a  href="@Url.Action("Login", "LoginRegister")">vous connecter</a> ou <a href="@Url.Action("Signup", "LoginRegister")">vous inscrire</a> pour ajouter un bien.</span>
+    }
+    else
+    {
+        @Html.ActionLink("Ajouter un bien", "Create", null, new { @class = "btn btn-primary" })
+    }
+</div>
+<div class="container-fluid pt-5">
+    <div class="row px-xl-5">
+        <!-- Shop Sidebar Start -->
+        <div class="col-lg-3 col-md-12">
+            <!-- Price Start -->
+            <div class="border-bottom mb-4 pb-4">
+                <h5 class="font-weight-semi-bold mb-4">Filtrer par prix</h5>
+                <form id="filterForm">
+                    <div class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
+                        <input type="checkbox" class="custom-control-input" checked id="price-all">
+                        <label class="custom-control-label" for="price-all">Tous les prix</label>
+                    </div>
+                    <div class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
+                        <input type="checkbox" class="custom-control-input" id="price-1">
+                        <label class="custom-control-label" for="price-1">0DH - 100DH</label>
+                    </div>
+                    <div class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
+                        <input type="checkbox" class="custom-control-input" id="price-2">
+                        <label class="custom-control-label" for="price-2">100DH - 200DH</label>
+                    </div>
+                    <div class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
+                        <input type="checkbox" class="custom-control-input" id="price-3">
+                        <label class="custom-control-label" for="price-3">200DH - 300DH</label>
+                    </div>
+                    <div class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
+                        <input type="checkbox" class="custom-control-input" id="price-4">
+                        <label class="custom-control-label" for="price-4">300DH - 400DH</label>
+                    </div>
+                    <div class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
+                        <input type="checkbox" class="custom-control-input" id="price-5">
+                        <label class="custom-control-label" for="price-5">400DH - 500DH</label>
+                    </div>
+                    <button type="button" id="applyFilterBtn" class="btn btn-primary">Appliquer filtre</button>
+                </form>
+            </div>
+
+
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+            <script>
+    $(document).ready(function() {
+        $('#applyFilterBtn').click(function() {
+            var minPrice, maxPrice;
+
+            if ($('#price-all').is(':checked')) {
+                // All Price checkbox is selected
+                minPrice = 0;
+                maxPrice = 1000;
+            } else {
+                // Get the selected price range
+                if ($('#price-1').is(':checked')) {
+                    minPrice = 0;
+                    maxPrice = 100;
+                } else if ($('#price-2').is(':checked')) {
+                    minPrice = 100;
+                    maxPrice = 200;
+                } else if ($('#price-3').is(':checked')) {
+                    minPrice = 200;
+                    maxPrice = 300;
+                } else if ($('#price-4').is(':checked')) {
+                    minPrice = 300;
+                    maxPrice = 400;
+                } else if ($('#price-5').is(':checked')) {
+                    minPrice = 400;
+                    maxPrice = 500;
+                }
+            }
+
+            $.ajax({
+                url: '@Url.Action("FilterByPrice", "Produits")',
+                type: 'GET',
+                data: { minPrice: minPrice, maxPrice: maxPrice },
+                success: function(result) {
+                    $('#productList').html(result);
+                }
+            });
+        });
+    });
+            </script>
+
+            <!-- Price End -->
+            <!-- Color Start -->
+            <!-- Color End -->
+            <!-- Size Start -->
+            <div id="productList"></div>
+
+        </div>
+        <!-- Shop Sidebar End -->
+        <!-- Shop Product Start -->
+        <div class="col-lg-9 col-md-12">
+            <div class="row pb-3">
+                <div class="col-12 pb-1">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <form action="@Url.Action("Search", "Produits")" method="GET">
+                            <div class="input-group">
+                                <input type="text" class="form-control" name="searchTerm" placeholder="Chercher par nom">
+                                <div class="input-group-append">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fa fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                        @*<div class="dropdown ml-4">
+                            <button class="btn border dropdown-toggle" type="button" id="triggerId" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Sort by
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="triggerId" style="">
+                                <a class="dropdown-item" href="#">Latest</a>
+                                <a class="dropdown-item" href="#">Popularity</a>
+                                <a class="dropdown-item" href="#">Best Rating</a>
+                            </div>
+                        </div>*@
+                    </div>
+                </div>
+
+                <div class="row px-xl-5 pb-3">
+                    @foreach (var produit in Model)
+                    {
+                        <div class="col-lg-3 col-md-6 col-sm-12 pb-1">
+                            <div class="card product-item border-0 mb-4" style="height: 350px;">
+                                <div class="card-header product-img position-relative overflow-hidden bg-transparent border p-0">
+                                    <a href="@Url.Action("Details", "Produits", new { id = produit.idProduit })">
+                                        <img src="/..@Html.DisplayFor(modelItem => produit.image)" class="img-fluid d-block mx-auto" style="height: 100%; object-fit: cover;" />
+                                    </a>
+                                </div>
+                                <div class="card-body border-left border-right text-center p-0 pt-4 pb-3">
+                                    <h6 class="text-truncate mb-3">@produit.nom</h6>
+                                    <div class="d-flex justify-content-center">
+                                        @if (produit.pourcentageSolde != 0)
+                                        {
+                                            <h6 class="ml-2">DH @produit.prixNouveau</h6>
+                                            <h6 class="text-muted ml-2"><del>DHs @produit.prix</del></h6>
+                                        }
+                                        else
+                                        {
+                                            <h6> DH @produit.prix</h6>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="card-footer d-flex justify-content-between bg-light border">
+                                    <a href="@Url.Action("Details", "Produits", new { id = produit.idProduit })" class="btn btn-sm text-dark p-0">
+                                        <i class="fas fa-eye text-primary mr-1"></i>Voir Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+
+                </div>
+                <div class="col-12 pb-1">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center mb-3">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" aria-label="Previous">
+                                    <span aria-hidden="true">«</span>
+                                    <span class="sr-only">Previous</span>
+                                </a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#" aria-label="Next">
+                                    <span aria-hidden="true">»</span>
+                                    <span class="sr-only">Next</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+        <!-- Shop Product End -->
+    </div>
+</div>
+
+
+
+
+
+

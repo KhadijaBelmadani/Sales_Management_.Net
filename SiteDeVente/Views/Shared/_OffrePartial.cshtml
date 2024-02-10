@@ -1,0 +1,51 @@
+﻿@model List<SiteDeVente.Models.Produit>
+
+<div class="container-fluid offer pt-5" id="offres">
+    <div class="row px-xl-5">
+        <div class="col-md-12">
+            <div id="productCarousel" class="carousel slide" data-ride="carousel">
+                <div class="carousel-inner">
+                    @for (int i = 0; i < Model.Count; i += 2)
+                    {
+                        if (Model[i].pourcentageSolde != 0) // Vérifier si le pourcentage est différent de zéro
+                        {
+                            <div class="carousel-item @((i == 0) ? "active" : "")">
+                                <div class="row">
+                                    <div class="col-md-6 pb-4">
+                                        <div class="position-relative bg-secondary text-center text-md-right text-white mb-2 py-5 px-5">
+                                            <div class="position-relative" style="z-index: 1;">
+                                                <h5 class="text-uppercase text-primary mb-3">@Model[i].pourcentageSolde% de réduction sur toutes les commandes</h5>
+                                                <h1 class="mb-4 font-weight-semi-bold">@Model[i].nom</h1>
+                                                <a href="@Url.Action("Details", "Produits", new { id = @Model[i].idProduit })" class="btn btn-outline-primary py-md-2 px-md-3">Acheter maintenant</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @if (i + 1 < Model.Count && Model[i + 1].pourcentageSolde != 0) // Vérifier également pour le deuxième produit
+                                    {
+                                        <div class="col-md-6 pb-4">
+                                            <div class="position-relative bg-secondary text-center text-md-right text-white mb-2 py-5 px-5">
+                                                <div class="position-relative" style="z-index: 1;">
+                                                    <h5 class="text-uppercase text-primary mb-3">@Model[i + 1].pourcentageSolde% de réduction sur toutes les commandes</h5>
+                                                    <h1 class="mb-4 font-weight-semi-bold">@Model[i + 1].nom</h1>
+                                                    <a href="@Url.Action("Details", "Produits", new { id = @Model[i+1].idProduit })" class="btn btn-outline-primary py-md-2 px-md-3">Acheter maintenant</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+                <a class="carousel-control-prev" href="#productCarousel" role="button" data-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Previous</span>
+                </a>
+                <a class="carousel-control-next" href="#productCarousel" role="button" data-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Next</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

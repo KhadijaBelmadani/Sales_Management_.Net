@@ -1,0 +1,114 @@
+﻿@{
+    ViewBag.Title = "Infos";
+    var nomComplet = Session["UserNom"];
+    var email = Session["UserEmail"];
+    var image = Session["UserImage"] as string;
+    var tel = Session["UserTelephone"] as string;
+    var role = Session["UserRole"] as string;
+    var password = Session["UserPassword"] as string;
+    var adresse = Session["UserAdresse"] as string; // Exemple : récupérer l'adresse de l'utilisateur depuis la session
+    var isSociete = role == "societe";
+    Layout = "~/Views/Profile/Index.cshtml";
+    <link rel="stylesheet" href="~/Content/profile/infos.css">
+
+
+}
+
+<main class="has-dflex-center">
+    <section>
+
+        <div class="lx-container-70">
+            @using (Html.BeginForm("EditProfile", "Profile", FormMethod.Post, new { enctype = "multipart/form-data" }))
+            {
+                @Html.AntiForgeryToken()
+                <div class="lx-row align-stretch c">
+                    <div class="lx-column column-user-pic a">
+                        <div class="container">
+                            <div class="profile-pic bs-md">
+                                <h1 class="pic-label">Photo de profile</h1>
+                                <div class="pic bs-md">
+                                    @if (!string.IsNullOrEmpty(image))
+                                    {
+                                        <img src="@Session["UserImage"]" alt="" width="4024" height="6048" loading="lazy">
+                                    }
+                                    else
+                                    {
+                                        <img src="/../img/User/avatarAnonyme.png" alt="" width="4024" height="6048" loading="lazy">
+                                    }
+
+                                    <label id="change-avatar" class="lx-btn" for="image">
+                                        <i class="fas fa-camera-retro"></i>&nbsp;&nbsp;Changer votre photo de profil.
+                                    </label>
+                                    <input type="file" id="image" name="ImageFile" style="display: none;" accept="image/*" autocomplete="off">
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lx-column column-form b">
+
+                            <div class="fieldset">
+                                <label for="user-name">Nom</label>
+                                <div class="input-wrapper">
+                                    <span class="icon"><i class="fas fa-user"></i></span>
+                                    <input type="text" id="nomComplet" name="nomComplet" value="@nomComplet" autocomplete="nomComplet" required>
+                                </div>
+                                <div id="user-name-helper" class="helper">
+                                    <p>Votre nom apparaîtra sur la plateforme.</p>
+                                </div>
+                            </div>
+
+                            <div class="fieldset">
+                                <label for="email">E-mail</label>
+                                <div class="input-wrapper">
+                                    <span class="icon"><i class="fas fa-envelope"></i></span>
+                                    <input type="email" id="email" name="email" value="@email" required autocomplete="username">
+                                </div>
+                            </div>
+                            <div class="fieldset">
+                                <label for="pass">Mot de passe</label>
+                                <div class="input-wrapper">
+                                    <span class="icon"><i class="fas fa-key"></i></span>
+                                    <input type="password" id="pass" name="password" value="@password" required autocomplete="current-password">
+                                </div>
+                            </div>
+                            <div class="fieldset">
+                                <label for="user-id">Téléphone</label>
+                                <div class="input-wrapper">
+                                    <span class="icon"><i class="fas fa-address-card"></i></span>
+                                    <input type="tel" id="tel" name="tel" value="@tel">
+                                </div>
+                            </div>
+                            <div class="fieldset">
+                                <label for="adresse">Adresse</label>
+                                <div class="input-wrapper">
+                                    <span class="icon"><i class="fas fa-map-marker-alt"></i></span>
+                                    <input type="text" id="adresse" name="adresse" value="@adresse" required>
+                                </div>
+                            </div>
+                            @if (isSociete) // Ajout des champs supplémentaires pour les sociétés
+                            {
+                                // Récupérer les valeurs des champs supplémentaires pour les sociétés à partir des informations de l'utilisateur connecté
+                                var specialite = Session["UserSpecialite"] as string; // Exemple : récupérer la spécialité de l'utilisateur depuis la session
+
+                                <div class="fieldset">
+                                    <label for="specialite">Spécialité</label>
+                                    <div class="input-wrapper">
+                                        <span class="icon"><i class="fas fa-tools"></i></span>
+                                        <input type="text" id="specialite" name="specialite" value="@specialite" required>
+                                    </div>
+                                </div>
+                            }
+                            <div class="actions">
+                                <button type="submit" id="save" class="lx-btn"><i class="fas fa-save"></i>&nbsp;&nbsp;Sauvegarder</button>
+                            </div>
+
+                    </div>
+                </div>
+            }
+        </div>
+
+    </section>
+</main>
+
+<script src="https://use.fontawesome.com/releases/v5.14.0/js/all.js" defer crossorigin="anonymous" data-search-pseudo-elements></script>

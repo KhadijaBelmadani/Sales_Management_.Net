@@ -1,0 +1,16 @@
+﻿@model List<SiteDeVente.Models.User>
+
+<div class="container-fluid py-5">
+    <div class="row px-xl-5">
+        <div class="col">
+            <div class="owl-carousel vendor-carousel">
+                @foreach (var user in Model)
+                {
+                    <div class="vendor-item border p-4">
+                        <img src="@user.image" alt="">
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

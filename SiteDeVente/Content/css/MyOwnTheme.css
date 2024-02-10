@@ -1,0 +1,67 @@
+﻿:root {
+    --mainColor: #BF567D !important;
+    --primary: var(--mainColor) !important;
+    --secondColor: #D9B0C3;
+    --thirdColor: #D9C5CE;
+    --fourthColor: #FFFFFF;
+}
+
+
+.card {
+    background-color: var(--fourthColor);
+}
+
+p{
+    color:#000000;
+}
+
+
+#content {
+    background-color: var(--thirdColor);
+}
+
+#accordionSidebar {
+    background-color: var(--mainColor);
+}
+
+ul{
+    
+        
+}
+
+.MainForeground {
+    color: var(--mainColor);
+}
+
+.SecondForeground {
+    color: var(--secondColor);
+}
+
+.ThirdForeground {
+    color: var(--thirdColor);
+}
+
+.MainBackground {
+    background-color: var(--mainColor);
+}
+
+.SecondBackground {
+    background-color: var(--secondColor);
+}
+
+.ThirdBackground {
+    background-color: var(--thirdColor);
+}
+
+.borderMain {
+    border-left: .25rem solid var(--mainColor);
+}
+
+.buttonMain {
+    color: var(--mainColor);
+    border-color: var(--mainColor);
+}
+
+.MainBackgroundColor {
+    background-color: var(--mainColor);
+}

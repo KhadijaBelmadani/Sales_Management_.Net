@@ -1,0 +1,50 @@
+﻿@model SiteDeVente.Models.User
+
+@{
+    ViewBag.Title = "Login";
+    Layout = null;
+}
+<!DOCTYPE html>
+<!-- Created By CodingNepal -->
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="utf-8">
+    <title>Multi Step Form | CodingNepal</title>
+    <link rel="stylesheet" href="~/Content/register/stylecss.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+</head>
+<body style="background:#D19C97;">
+    <div class="container">
+        <header>Se connecter</header>
+
+        <div class="form-outer">
+            @using (Html.BeginForm("Login", "LoginRegister", FormMethod.Post))
+            {
+
+                <div class="page">
+                    <div class="title">
+
+                    </div>
+                    <div class="field">
+                        @Html.Label("Email", new { @class = "label" })
+                        @Html.TextBoxFor(model => model.email)
+                        @Html.ValidationMessageFor(model => model.email)
+                    </div>
+                    <div class="field">
+                        @Html.Label("Mot de passe", new { @class = "label" })
+                        @Html.PasswordFor(model => model.password)
+                        @Html.ValidationMessageFor(model => model.password)
+                    </div>
+                    <div class="field btns">
+                        <button class="submit" style="background:#D19C97;">Se connecter</button>
+                    </div>
+                </div>
+
+
+            }
+        </div>
+    </div>
+    <script src="~/Scripts/register/script.js"></script>
+
+</body>
+</html>

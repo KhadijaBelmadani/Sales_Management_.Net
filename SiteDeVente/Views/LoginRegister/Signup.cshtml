@@ -1,0 +1,154 @@
+﻿@model SiteDeVente.Models.User
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<!-- Created By CodingNepal -->
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="utf-8">
+    <title>Multi Step Form | CodingNepal</title>
+    <link rel="stylesheet" href="~/Content/register/stylecss.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+</head>
+<body  style="background:#D19C97;">
+    <div class="container">
+        <header>S'inscrire</header>
+        <div class="progress-bar">
+            <div class="step">
+                <p></p>
+                <div class="bullet">
+                    <span>1</span>
+                </div>
+                <div class="check fas fa-check"></div>
+            </div>
+            <div class="step">
+                <p></p>
+                <div class="bullet">
+                    <span>2</span>
+                </div>
+                <div class="check fas fa-check"></div>
+            </div>
+            <div class="step">
+                <p></p>
+                <div class="bullet">
+                    <span>3</span>
+                </div>
+                <div class="check fas fa-check"></div>
+            </div>
+            <div class="step">
+                <p></p>
+                <div class="bullet">
+                    <span>4</span>
+                </div>
+                <div class="check fas fa-check"></div>
+            </div>
+        </div>
+
+        <div class="form-outer">
+            @using (Html.BeginForm("Signup", "LoginRegister", FormMethod.Post))
+            {
+                <!-- Le reste de votre formulaire ici -->
+
+                <div class="page slide-page">
+                    <div class="title">
+                        Type
+                    </div>
+                    <br>
+                    <div style="text-align: left;">
+                        @Html.RadioButtonFor(model => model.role, "Particulier", new { id = "particulier" })
+                        @Html.LabelFor(model => model.role, "Particulier", new { @style = "font-weight:bold;" })
+                    </div>
+                    <br />
+                    <div style="text-align: left;">
+                        @Html.RadioButtonFor(model => model.role, "Societe", new { id = "societe" })
+                        @Html.LabelFor(model => model.role, "Societe", new { @style = "font-weight:bold;" })
+                    </div>
+
+                    <br />
+                    <br />
+                    <br />
+                    <br />
+                    <div class="field">
+                        <button class="firstNext next" style="background:#D19C97;">Suivant</button>
+                    </div>
+                </div>
+                <div class="page">
+                    <div class="title">
+                        Contact
+                    </div>
+                    <div class="field">
+                        @Html.Label("Nom Complet", new { @class = "label" })
+                        @Html.TextBoxFor(model => model.nomComplet)
+                        @Html.ValidationMessageFor(model => model.nomComplet)
+
+                    </div>
+                    <div class="field">
+                        @Html.Label("Téléphone", new { @class = "label" })
+                        @Html.TextBoxFor(model => model.tel)
+                        @Html.ValidationMessageFor(model => model.tel)
+                    </div>
+                    <div class="field btns">
+                        <button class="prev-1 prev"  style="background:#D19C97;">Précédent</button>
+                        <button class="next-1 next" style="background:#D19C97;">Suivant</button>
+                    </div>
+                </div>
+                <div class="page">
+                    <div class="title">
+                        Email et Password
+                    </div>
+                    <div class="field">
+                        @Html.Label("Email", new { @class = "label" })
+                        @Html.TextBoxFor(model => model.email)
+                        @Html.ValidationMessageFor(model => model.email)
+                    </div>
+                    <div class="field">
+                        @Html.Label("Mot de passe", new { @class = "label" })
+                        @Html.PasswordFor(model => model.password)
+                        @Html.ValidationMessageFor(model => model.password)
+                    </div>
+                    <div class="field btns">
+                        <button class="prev-2 prev" style="background:#D19C97;">Précédent</button>
+                        <button class="next-2 next"  style="background:#D19C97;">Suivant</button>
+                    </div>
+                </div>
+                <div class="page">
+                    <div class="title">
+                        Adresse
+                    </div>
+                    <div class="field">
+                        @Html.Label("Adresse", new { @class = "label" })
+                        @Html.TextBoxFor(model => model.adresse)
+                        @Html.ValidationMessageFor(model => model.adresse)
+                    </div>
+                    <div id="societeFields" style="display: none" ; class="field">
+                        @Html.Label("Spécialité", new { @class = "label" })
+                        @Html.TextBoxFor(model => model.specialite)
+                        @Html.ValidationMessageFor(model => model.specialite)
+                    </div>
+                    <div class="field btns">
+                        <button class="prev-3 prev" style="background:#D19C97;">Précédent</button>
+                        <button type="submit" class="submit"  style="background:#D19C97;">S'inscrire</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+    <script src="~/Scripts/register/script.js"></script>
+    <script>
+        var societeFields = document.getElementById("societeFields");
+        var particulierRadio = document.getElementById("Particulier");
+        var societeRadio = document.getElementById("Societe");
+
+        particulierRadio.addEventListener("change", function () {
+            societeFields.style.display = "none";
+        });
+
+        societeRadio.addEventListener("change", function () {
+            societeFields.style.display = "block";
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+﻿@model IEnumerable<SiteDeVente.Models.Categorie>
+
+<div class="navbar-nav w-100 ">
+    @if (Model != null)
+    {
+        foreach (var category in Model)
+        {
+            <div class="nav-item dropdown">
+                @Html.ActionLink(category.nom, "ListeProduitsParCategorie", "CategoriesProduits", new { idCategorie = category.idCategorie }, new { @class = "nav-link" })
+
+            </div>
+        }
+    }
+</div>
