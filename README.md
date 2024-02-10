@@ -30,15 +30,18 @@ https://github.com/KhadijaBelmadani/Sales_Management_.Net.git
 1) Database Setup:
 
 Create a SQL Server database and execute the SQL scripts in the database-scripts folder to set up the schema and initial data.
+
+
 2) Configuration:
 
 Update the connection string in the Web.config file with your database credentials.
+
 3) Build and Run:
 
 Open the solution in Visual Studio.
 Build and run the project.
 
-##Screenshots:
+## Screenshots:
 ![image](https://github.com/KhadijaBelmadani/Sales_Management_.Net/assets/122830181/813c16e5-083e-4a69-a219-fb8c4bf6c0b9)
 ![image](https://github.com/KhadijaBelmadani/Sales_Management_.Net/assets/122830181/f81bee4c-b896-4862-9fc5-d2c88a6cfb40)
 ![image](https://github.com/KhadijaBelmadani/Sales_Management_.Net/assets/122830181/31e135e0-4d7b-4c70-820d-bea192b003c6)
