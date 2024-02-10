@@ -7,7 +7,7 @@ This web application is a Sales Management system built using ASP.NET  and .NET 
 ## Features
 
 - **Sales Dashboard**: Overview of key sales metrics and trends.
--**Admin Dashboard**: Overview of users and products management.
+- **Admin Dashboard**: Overview of users and products management.
 - **Customer Management**: Add, edit, and view customer details.
 - **Product Management**: Manage the product catalog, including details and inventory.
 - **User Authentication and Authorization**: Secure access to different functionalities based on user roles.
@@ -23,49 +23,17 @@ This web application is a Sales Management system built using ASP.NET  and .NET 
 ## Setup Instructions
 
 1. **Clone the Repository:**
-   ```bash
+ 
 https://github.com/KhadijaBelmadani/Sales_Management_.Net.git
 
 
-Certainly! Here's a basic template for a README file that you can use for your ASP.NET Web Application (.NET Framework) sales management project on GitHub. Customize it based on your project's specific details and requirements.
-
-markdown
-Copy code
-# Sales Management Web Application
-
-## Overview
-
-This web application is a Sales Management system built using ASP.NET Web Forms and .NET Framework. It provides functionality for managing sales, customers, products, and orders.
-
-## Features
-
-- **Sales Dashboard**: Overview of key sales metrics and trends.
-- **Customer Management**: Add, edit, and view customer details.
-- **Product Management**: Manage the product catalog, including details and inventory.
-- **Order Processing**: Create and process sales orders.
-- **User Authentication and Authorization**: Secure access to different functionalities based on user roles.
-
-## Technologies Used
-
-- ASP.NET Web Forms
-- .NET Framework
-- C#
-- HTML, CSS, JavaScript
-- SQL Server (or your chosen database)
-- Entity Framework (or your chosen ORM)
-
-## Setup Instructions
-
-1. **Clone the Repository:**
-   ```bash
-   git clone https://github.com/yourusername/sales-management-web.git
-1)Database Setup:
+1) Database Setup:
 
 Create a SQL Server database and execute the SQL scripts in the database-scripts folder to set up the schema and initial data.
-2)Configuration:
+2) Configuration:
 
 Update the connection string in the Web.config file with your database credentials.
-3)Build and Run:
+3) Build and Run:
 
 Open the solution in Visual Studio.
 Build and run the project.
